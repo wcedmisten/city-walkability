@@ -1,0 +1,11 @@
+version: "3.9"
+services:
+  valhalla:
+    image: valhalla/valhalla:run-latest
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./scripts:/scripts
+      - ./data:/data
+    # entrypoint: /scripts/build_tiles.sh
+    entrypoint: [ "valhalla_service", "/data/valhalla.json", 1" ]
