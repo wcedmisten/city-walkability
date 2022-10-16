@@ -7,5 +7,4 @@ services:
     volumes:
       - ./scripts:/scripts
       - ./data:/data
-    # entrypoint: /scripts/build_tiles.sh
-    entrypoint: [ "valhalla_service", "/data/valhalla.json", 1" ]
+    entrypoint: /scripts/build_tiles.sh
