@@ -101,11 +101,13 @@ def num_unique_amenities(rows):
 state = "va"
 
 def get_avg_unique_amenities(city, state):
-    print("processing ", city)
     # generate points inside a city bbox
 
     # get bbox for city
-    cur.execute("SELECT ST_AsText(ST_Envelope( geom )) FROM ( SELECT geom FROM city WHERE name=%s AND state=%s ) as geom", [city, state])
+    get_bbox_query = """SELECT ST_AsText(ST_Envelope( geom ))
+    FROM ( SELECT geom FROM city WHERE name=%s AND state=%s ) as geom
+    """
+    cur.execute(get_bbox_query, [city, state])
     bbox = cur.fetchone()
 
     # (minx, miny, maxx, maxy)
@@ -119,51 +121,41 @@ def get_avg_unique_amenities(city, state):
 
     is_in_query = """
     SELECT ST_Contains(geom, ST_GeomFromText('POINT(%s %s)'))
-    FROM ( SELECT geom FROM city WHERE name=%s ) as geom
+    FROM ( SELECT geom FROM city WHERE name=%s AND state=%s ) as geom
     """
 
     scaled = list(map(lambda p: [p[0] + minx, p[1] + miny], points))
 
     def point_in_city(point):
-        is_in_city = cur.execute(is_in_query, [point[0], point[1], city])
+        is_in_city = cur.execute(is_in_query, [point[0], point[1], city, state])
         return cur.fetchone()[0]
 
     in_city = list(filter(point_in_city, scaled))
 
-    # m = folium.Map(
-    #     location=[37.47923708402801, -77.5710280477624],
-    # )
-
-    # with open(f"geojson-us-city-boundaries/cities/{state}/{city}.json") as f:
-    #     data = json.load(f)
-
-    # geom = data['features'][0]['geometry']
-
-    # folium.GeoJson(geom, name="geojson").add_to(m)
-
     total_unique_amenities = 0
 
-    for x, y in in_city:
-        amenities = get_amenities(y, x)
+    for lon, lat in in_city:
+        amenities = get_amenities(lat, lon)
 
         num_unique = num_unique_amenities(amenities)
         total_unique_amenities += num_unique
 
-        # folium.Marker(
-        #     [y, x]
-        # ).add_to(m)
     if len(in_city) == 0:
         return 0
-
-    # m.save('test.html')
 
     return total_unique_amenities / len(in_city)
 
 
 res = {}
 
+with open("results.json") as f:
+    results = json.load(f)
+
 for city, state in get_cities():
-    res[city] = get_avg_unique_amenities(city, state)
-    break
+    # score = get_avg_unique_amenities(city, state)
+    
+    print(city, state, results[city])
+
+    res[city + " " + state] = results[city]
 
 print(res)
