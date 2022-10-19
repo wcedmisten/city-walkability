@@ -7,6 +7,7 @@ import poisson_disc
 import shapely.wkt
 import numpy as np
 import folium
+from util import get_cities
 
 
 MAX_WALK_TIME = 15
@@ -99,12 +100,12 @@ def num_unique_amenities(rows):
 
 state = "va"
 
-def get_avg_unique_amenities(city):
+def get_avg_unique_amenities(city, state):
     print("processing ", city)
     # generate points inside a city bbox
 
     # get bbox for city
-    cur.execute("SELECT ST_AsText(ST_Envelope( geom )) FROM ( SELECT geom FROM city WHERE name=%s ) as geom", [city])
+    cur.execute("SELECT ST_AsText(ST_Envelope( geom )) FROM ( SELECT geom FROM city WHERE name=%s AND state=%s ) as geom", [city, state])
     bbox = cur.fetchone()
 
     # (minx, miny, maxx, maxy)
@@ -154,14 +155,15 @@ def get_avg_unique_amenities(city):
     if len(in_city) == 0:
         return 0
 
+    # m.save('test.html')
+
     return total_unique_amenities / len(in_city)
 
-# m.save('test.html')
 
 res = {}
 
-for city_file in glob.glob(f'geojson-us-city-boundaries/cities/{state}/*'):
-    city = city_file.split("/")[-1].split(".json")[0]
-    res[city] = get_avg_unique_amenities(city)
+for city, state in get_cities():
+    res[city] = get_avg_unique_amenities(city, state)
+    break
 
 print(res)
