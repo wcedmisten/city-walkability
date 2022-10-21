@@ -9,7 +9,7 @@ my_rank = {}
 
 counter = 1
 for city, score in sorted(data.items(), key=lambda item: item[1], reverse=True):
-    print(city, ",", score, ",", score / max_score * 100)
+    print("|", counter, "|", city, "|", score, "|", score / max_score * 100, "|")
     my_rank[city] = counter
     counter += 1
 
